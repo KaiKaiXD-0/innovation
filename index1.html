@@ -1,0 +1,137 @@
+      el.player.style.left = "8%";
+      el.player.style.top = "48%";
+      el.crowd.style.display = "none";
+      el.confetti.innerHTML = "";
+      const item = game.questions[game.index];
+      const choices = shuffle([item.a, ...item.choices]).slice(0, 3);
+      game.correctRoute = choices.indexOf(item.a);
+      el.gameProgress.textContent = `Question ${game.index + 1} of ${game.questions.length}`;
+      el.gameQuestion.textContent = item.q;
+      el.answers.innerHTML = "";
+      choices.forEach((choice, idx) => {
+        document.getElementById(`route${idx}`).textContent = choice;
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.textContent = `Route ${String.fromCharCode(65 + idx)}: ${choice}`;
+        btn.addEventListener("click", () => chooseRoute(idx));
+        el.answers.appendChild(btn);
+      });
+      el.gameStatus.textContent = "Choose the route with the correct answer.";
+    }
+
+    function chooseRoute(idx) {
+      const game = state.game;
+      if (game.locked) return;
+      game.locked = true;
+      const tops = ["26%", "48%", "70%"];
+      el.player.style.left = "82%";
+      el.player.style.top = tops[idx];
+      const correct = idx === game.correctRoute;
+      setTimeout(() => {
+        if (correct) {
+          game.score++;
+          el.gameStatus.textContent = "Correct route. Keep going.";
+          if (game.index === game.questions.length - 1) {
+            el.gameStatus.textContent = `Congratulations. You completed the route with ${game.score}/${game.questions.length} correct answers.`;
+            el.crowd.style.display = "flex";
+            burstConfetti();
+            speak("Congratulations. You completed the route.");
+          } else {
+            game.index++;
+            setTimeout(renderQuestion, 850);
+          }
+        } else {
+          el.player.style.left = "4%";
+          el.player.style.top = game.scene === "beach" ? "44%" : "72%";
+          el.gameStatus.textContent = `Wrong route. The correct answer was: ${game.questions[game.index].a}. Try a new random game.`;
+        }
+      }, 650);
+    }
+
+    function burstConfetti() {
+      const colors = ["#2077ff", "#00a8a8", "#ff6f61", "#f5b642", "#37a66b"];
+      for (let i = 0; i < 36; i++) {
+        const piece = document.createElement("i");
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.setProperty("--c", colors[i % colors.length]);
+        piece.style.animationDelay = `${Math.random() * 0.3}s`;
+        el.confetti.appendChild(piece);
+      }
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.chapter = btn.dataset.chapter;
+        document.body.classList.add("content-open");
+        document.getElementById("subtopics").classList.remove("hidden");
+        renderTopics();
+        document.getElementById("subtopics").scrollIntoView({ behavior: "smooth" });
+      });
+    });
+
+    document.getElementById("jumpTop").addEventListener("click", () => document.getElementById("home").scrollIntoView({ behavior: "smooth" }));
+    document.getElementById("closeLesson").addEventListener("click", () => {
+      el.lessonShell.style.display = "none";
+      document.getElementById("subtopics").scrollIntoView({ behavior: "smooth" });
+    });
+    document.getElementById("prevSlide").addEventListener("click", () => {
+      if (state.slide > 0) {
+        state.slide--;
+        renderSlide();
+      }
+    });
+    document.getElementById("nextSlide").addEventListener("click", () => {
+      if (state.slide < state.topic.slides.length - 1) {
+        state.slide++;
+        renderSlide();
+      } else {
+        startGame();
+      }
+    });
+    document.getElementById("gameBtn").addEventListener("click", startGame);
+    document.getElementById("restartGame").addEventListener("click", startGame);
+    document.getElementById("speakBtn").addEventListener("click", () => {
+      const slide = currentSlide();
+      speak(`${slide.title}. ${slide.text} ${slide.keys.join(" ")}`);
+    });
+    el.aiLauncher.addEventListener("click", openAiPanel);
+    el.aiClose.addEventListener("click", closeAiPanel);
+    if ("speechSynthesis" in window) {
+      speechSynthesis.onvoiceschanged = selectTeacherVoice;
+    }
+    el.sendChat.addEventListener("click", () => {
+      const text = el.chatInput.value.trim();
+      if (!text) return;
+      addUser(text);
+      el.chatInput.value = "";
+      const reply = tutorReply(text);
+      addBot(reply);
+      speak(reply);
+    });
+    el.chatInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") el.sendChat.click();
+    });
+    document.querySelectorAll(".suggestions button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        el.chatInput.value = btn.dataset.prompt;
+        el.sendChat.click();
+      });
+    });
+
+    function animate() {
+      state.frame++;
+      drawHero();
+      if (state.topic) drawLesson();
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener("resize", () => {
+      if (!document.getElementById("subtopics").classList.contains("hidden")) renderTopics();
+      if (state.topic) drawLesson();
+    });
+
+    addBot("Hello, I'm Ms. F(x), your friendly mathematics AI teacher. You can greet me, ask a concept question, send an equation, request an example, or ask for practice about functions, graphs, domain, range, inverse functions, logarithms, exponentials, and trigonometry.");
+    animate();
+  </script>
+</body>
+</html>
