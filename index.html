@@ -3148,11 +3148,37 @@
       });
     }
 
+    const graphParamConfig = {
+      linear: { params: ["a", "b"], hints: { a: "gradient / reflection", b: "y-intercept" } },
+      quadratic: { params: ["a", "b", "c"], hints: { a: "stretch / reflection", b: "horizontal shift", c: "vertical shift" } },
+      cubic: { params: ["a", "b", "c"], hints: { a: "stretch / reflection", b: "horizontal shift", c: "vertical shift" } },
+      exp: { params: ["a", "b"], hints: { a: "growth scale / reflection", b: "horizontal asymptote shift" } },
+      log: { params: ["a", "b", "c"], hints: { a: "stretch / reflection", b: "vertical asymptote x=b", c: "vertical shift" } },
+      sqrt: { params: ["a", "b", "c"], hints: { a: "stretch / reflection", b: "starting x-value", c: "vertical shift" } },
+      absLinear: { params: ["a", "b", "c"], hints: { a: "stretch / reflection", b: "vertex x-value", c: "vertical shift" } },
+      absQuadratic: { params: ["a", "b", "c", "d"], hints: { a: "quadratic stretch", b: "horizontal shift", c: "inside vertical change", d: "outside vertical shift" } },
+      sin: { params: ["a", "b", "c", "d"], hints: { a: "amplitude / reflection", b: "period control", c: "phase shift", d: "midline" } },
+      cos: { params: ["a", "b", "c", "d"], hints: { a: "amplitude / reflection", b: "period control", c: "phase shift", d: "midline" } },
+      tan: { params: ["a", "b", "c", "d"], hints: { a: "vertical stretch", b: "period control", c: "phase shift", d: "vertical shift" } }
+    };
+    function updateVisibleGraphParams(lab) {
+      const type = lab.querySelector("#desmosType").value;
+      const config = graphParamConfig[type] || graphParamConfig.sin;
+      ["a", "b", "c", "d"].forEach(name => {
+        const row = lab.querySelector('[data-param="' + name + '"]');
+        if (!row) return;
+        const show = config.params.includes(name);
+        row.hidden = !show;
+        row.style.display = show ? "grid" : "none";
+        const hint = row.querySelector("small");
+        if (hint && config.hints[name]) hint.textContent = config.hints[name];
+      });
+    }
     function renderDesmosAdjuster() {
       const lab = document.createElement("article");
       lab.className = "desmos-lab-card";
-      const sliderData = [["a", "1", "vertical stretch / reflection"], ["b", "1", "intercept / horizontal shift / period"], ["c", "0", "vertical shift or phase shift"], ["d", "0", "final vertical shift when used"]];
-      const sliders = sliderData.map(([name, value, hint]) => `<label>${name}: <span id="${name}Val">${Number(value).toFixed(1)}</span><small>${hint}</small><input id="${name}Slider" type="range" min="-4" max="4" step="0.1" value="${value}"></label>`).join("");
+      const sliderData = [["a", "1"], ["b", "1"], ["c", "0"], ["d", "0"]];
+      const sliders = sliderData.map(([name, value]) => `<label data-param="${name}">${name}: <span id="${name}Val">${Number(value).toFixed(1)}</span><small></small><input id="${name}Slider" type="range" min="-4" max="4" step="0.1" value="${value}"></label>`).join("");
       lab.innerHTML = `
         <div class="desmos-canvas-wrap">
           <canvas id="desmosCanvas" aria-label="Interactive fallback graph adjuster"></canvas>
@@ -3182,6 +3208,7 @@
       ["aSlider", "bSlider", "cSlider", "dSlider"].forEach(id => lab.querySelector(`#${id}`).addEventListener("input", () => drawDesmosAdjuster(lab)));
       lab.querySelector("#desmosType").addEventListener("input", () => drawDesmosAdjuster(lab));
       lab.querySelector("#desmosType").addEventListener("change", () => drawDesmosAdjuster(lab));
+      updateVisibleGraphParams(lab);
       requestAnimationFrame(() => drawDesmosAdjuster(lab));
     }
     function drawMini(canvas, type) {
@@ -3978,8 +4005,15 @@
       }
       return lab._desmosCalculator;
     }
-    function desmosLatex(type, a, b, c, d, safeB) {
-      const A = a.toFixed(2), B = b.toFixed(2), C = c.toFixed(2), D = d.toFixed(2), SB = safeB.toFixed(2);
+    function isGraphAdjusterValid(type, a, b, c, d) {
+      const eps = 0.0001;
+      if (![a, b, c, d].every(Number.isFinite)) return false;
+      if (Math.abs(a) < eps) return false;
+      if (["sin", "cos", "tan"].includes(type) && Math.abs(b) < eps) return false;
+      return true;
+    }
+    function desmosLatex(type, a, b, c, d) {
+      const A = a.toFixed(2), B = b.toFixed(2), C = c.toFixed(2), D = d.toFixed(2);
       const latex = {
         linear: "y=" + A + "x+" + B,
         quadratic: "y=" + A + "\\left(x-" + B + "\\right)^2+" + C,
@@ -3989,13 +4023,13 @@
         sqrt: "y=" + A + "\\sqrt{x-" + B + "}+" + C,
         absLinear: "y=" + A + "\\left|x-" + B + "\\right|+" + C,
         absQuadratic: "y=\\left|" + A + "\\left(x-" + B + "\\right)^2+" + C + "\\right|+" + D,
-        sin: "y=" + A + "\\sin\\left(" + SB + "x+" + C + "\\right)+" + D,
-        cos: "y=" + A + "\\cos\\left(" + SB + "x+" + C + "\\right)+" + D,
-        tan: "y=" + A + "\\tan\\left(" + SB + "x+" + C + "\\right)+" + D
+        sin: "y=" + A + "\\sin\\left(" + B + "x+" + C + "\\right)+" + D,
+        cos: "y=" + A + "\\cos\\left(" + B + "x+" + C + "\\right)+" + D,
+        tan: "y=" + A + "\\tan\\left(" + B + "x+" + C + "\\right)+" + D
       };
       return latex[type];
     }
-    function updateDesmosModel(lab, type, latex) {
+    function updateDesmosModel(lab, type, latex, isValid) {
       const canvas = lab.querySelector("#desmosCanvas");
       const holder = lab.querySelector("#desmosCalculator");
       if (!holder) return;
@@ -4004,12 +4038,13 @@
         if (!calculator) return;
         holder.style.display = "block";
         canvas.style.display = "none";
+        calculator.removeExpression({ id: "mainGraph" });
+        calculator.removeExpression({ id: "domainBoundary" });
+        if (!isValid) return;
         calculator.setExpression({ id: "mainGraph", latex, color: "#2077ff", lineWidth: 4 });
         if (["log", "sqrt"].includes(type)) {
           const boundary = Number(lab.querySelector("#bSlider").value).toFixed(2);
           calculator.setExpression({ id: "domainBoundary", latex: "x=" + boundary, color: "#ff6f61", lineStyle: window.Desmos.Styles.DASHED });
-        } else {
-          calculator.removeExpression({ id: "domainBoundary" });
         }
       }).catch(() => {
         holder.style.display = "none";
@@ -4020,12 +4055,11 @@
     function drawDesmosAdjuster(lab) {
       const canvas = lab.querySelector("#desmosCanvas");
       const type = lab.querySelector("#desmosType").value;
-      const a = Number(lab.querySelector("#aSlider").value) || 0.1;
+      const a = Number(lab.querySelector("#aSlider").value);
       const b = Number(lab.querySelector("#bSlider").value);
       const c = Number(lab.querySelector("#cSlider").value);
       const d = Number(lab.querySelector("#dSlider").value);
       ["a","b","c","d"].forEach(name => lab.querySelector("#" + name + "Val").textContent = Number(lab.querySelector("#" + name + "Slider").value).toFixed(1));
-      const safeB = Math.abs(b) < 0.1 ? 1 : b;
       const eq = {
         linear: "y = " + a.toFixed(1) + "x + " + b.toFixed(1),
         quadratic: "y = " + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^2 + " + c.toFixed(1),
@@ -4035,12 +4069,14 @@
         sqrt: "y = " + a.toFixed(1) + "sqrt(x - " + b.toFixed(1) + ") + " + c.toFixed(1),
         absLinear: "y = " + a.toFixed(1) + "|x - " + b.toFixed(1) + "| + " + c.toFixed(1),
         absQuadratic: "y = |" + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^2 + " + c.toFixed(1) + "| + " + d.toFixed(1),
-        sin: "y = " + a.toFixed(1) + "sin(" + safeB.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1),
-        cos: "y = " + a.toFixed(1) + "cos(" + safeB.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1),
-        tan: "y = " + a.toFixed(1) + "tan(" + safeB.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1)
+        sin: "y = " + a.toFixed(1) + "sin(" + b.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1),
+        cos: "y = " + a.toFixed(1) + "cos(" + b.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1),
+        tan: "y = " + a.toFixed(1) + "tan(" + b.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1)
       }[type];
       lab.querySelector("#desmosEquation").textContent = eq;
-      updateDesmosModel(lab, type, desmosLatex(type, a, b, c, d, safeB));
+      updateVisibleGraphParams(lab);
+      const isValid = isGraphAdjusterValid(type, a, b, c, d);
+      updateDesmosModel(lab, type, desmosLatex(type, a, b, c, d), isValid);
       const { ctx, w, h } = resizeCanvas(canvas);
       ctx.clearRect(0, 0, w, h);
       const pad = 54, xMin = -8, xMax = 8, yMin = -5, yMax = 5;
@@ -4056,9 +4092,9 @@
         sqrt: x => x >= b ? a * Math.sqrt(x - b) + c : Infinity,
         absLinear: x => a * Math.abs(x - b) + c,
         absQuadratic: x => Math.abs(a * (x - b) ** 2 + c) + d,
-        sin: x => a * Math.sin(safeB * x + c) + d,
-        cos: x => a * Math.cos(safeB * x + c) + d,
-        tan: x => { const v = Math.cos(safeB * x + c); return Math.abs(v) < 0.04 ? Infinity : a * Math.tan(safeB * x + c) + d; }
+        sin: x => a * Math.sin(b * x + c) + d,
+        cos: x => a * Math.cos(b * x + c) + d,
+        tan: x => { const v = Math.cos(b * x + c); return Math.abs(v) < 0.04 ? Infinity : a * Math.tan(b * x + c) + d; }
       }[type];
       const grad = ctx.createLinearGradient(0, 0, w, h); grad.addColorStop(0, "#fff9db"); grad.addColorStop(0.55, "#effff9"); grad.addColorStop(1, "#eef5ff"); ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
       ctx.strokeStyle = "rgba(16,32,51,0.12)"; ctx.lineWidth = 1; ctx.fillStyle = "rgba(16,32,51,0.62)"; ctx.font = "13px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -4067,6 +4103,14 @@
       for (let y = Math.ceil(yMin); y <= yMax; y++) { const Y = py(y); ctx.beginPath(); ctx.moveTo(pad, Y); ctx.lineTo(w - pad, Y); ctx.stroke(); if (y !== 0) { ctx.fillText(String(y), x0 - 10, Y); ctx.beginPath(); ctx.moveTo(x0 - 5, Y); ctx.lineTo(x0 + 5, Y); ctx.stroke(); } }
       ctx.strokeStyle = "#102033"; ctx.fillStyle = "#102033"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(pad, y0); ctx.lineTo(w - pad + 12, y0); ctx.stroke(); drawMiniArrowHead(ctx, w - pad + 12, y0, 0, "#102033"); ctx.beginPath(); ctx.moveTo(x0, h - pad); ctx.lineTo(x0, pad - 12); ctx.stroke(); drawMiniArrowHead(ctx, x0, pad - 12, -Math.PI / 2, "#102033");
       ctx.font = "bold 18px Arial"; ctx.textAlign = "left"; ctx.fillText("x", w - pad + 22, y0 + 18); ctx.fillText("y", x0 + 10, pad - 20); ctx.fillText("0", x0 - 22, y0 + 22);
+      if (!isValid) {
+        ctx.fillStyle = "rgba(11,45,85,0.45)";
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("", w / 2, h / 2);
+        ctx.fillStyle = "#0b2d55"; ctx.font = "bold 18px Georgia"; ctx.textAlign = "left"; ctx.fillText(eq, pad + 10, pad - 20);
+        return;
+      }
       if (["log", "sqrt"].includes(type)) { ctx.save(); ctx.strokeStyle = "rgba(255,111,97,0.75)"; ctx.lineWidth = 3; ctx.setLineDash([8,7]); ctx.beginPath(); ctx.moveTo(px(b), pad); ctx.lineTo(px(b), h - pad); ctx.stroke(); ctx.restore(); }
       if (type === "exp") { ctx.save(); ctx.strokeStyle = "rgba(255,111,97,0.75)"; ctx.lineWidth = 3; ctx.setLineDash([8,7]); ctx.beginPath(); ctx.moveTo(pad, py(b)); ctx.lineTo(w - pad, py(b)); ctx.stroke(); ctx.restore(); }
       ctx.save(); ctx.beginPath(); ctx.rect(pad, pad, w - pad * 2, h - pad * 2); ctx.clip(); ctx.strokeStyle = "#2077ff"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); let started = false;
