@@ -1497,12 +1497,12 @@
     .desmos-canvas-wrap { min-height: 680px; height: 100%; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,168,168,0.22); background: linear-gradient(135deg, #f8ffff, #fff8f0); }
     .desmos-canvas-wrap canvas { width: 100%; height: 680px; display: block; }
     #desmosCalculator { width: 100%; height: 680px; display: none; }
-    .desmos-controls { display: grid; gap: 20px; align-content: start; font-size: 1.28rem; }
-    .desmos-controls label { font-weight: 800; color: #173754; display: grid; gap: 10px; font-size: 1.18rem; }
-    .desmos-controls small { font-size: 1.02rem; line-height: 1.35; }
-    .desmos-controls input[type="range"], .desmos-controls select { width: 100%; accent-color: var(--teal); font-size: 1.12rem; min-height: 42px; }
-    .desmos-controls input[type="range"] { min-height: 44px; }
-    .desmos-equation { font-family: Georgia, serif; font-size: 1.55rem; color: #0b2d55; background: rgba(216,255,243,0.58); border: 1px solid rgba(0,168,168,0.22); border-radius: 8px; padding: 16px; }
+    .desmos-controls { display: grid; gap: 22px; align-content: start; font-size: 1.42rem; }
+    .desmos-controls label { font-weight: 850; color: #173754; display: grid; gap: 12px; font-size: 1.3rem; }
+    .desmos-controls small { font-size: 1.16rem; line-height: 1.38; }
+    .desmos-controls input[type="range"], .desmos-controls select { width: 100%; accent-color: var(--teal); font-size: 1.22rem; min-height: 46px; }
+    .desmos-controls input[type="range"] { min-height: 48px; }
+    .desmos-equation { font-family: Georgia, serif; font-size: 1.72rem; color: #0b2d55; background: rgba(216,255,243,0.58); border: 1px solid rgba(0,168,168,0.22); border-radius: 8px; padding: 18px; }
     @media (max-width: 760px) { .desmos-lab-card { grid-template-columns: 1fr; } }
 
   </style>
@@ -1536,7 +1536,7 @@
             <span class="chapter-kicker">Chapter</span>
             <span class="chapter-title">Sketching Graph Based on Function</span>
             <span class="chapter-icons" aria-hidden="true">
-              <span class="chapter-mini"><svg viewBox="0 0 150 86"><path class="mini-axis" d="M18 64H134M74 74V12" /><path class="mini-mark mini-coral" d="M28 61L74 24L120 61" /><text x="86" y="30">y=|x|</text><text x="127" y="78">x</text><text x="80" y="18">y</text><text x="63" y="78">0</text></svg></span>
+              <span class="chapter-mini"><svg viewBox="0 0 150 86"><path class="mini-axis" d="M18 64H134M74 74V12" /><path class="mini-mark mini-coral" d="M32 26L74 64L116 26" /><circle cx="74" cy="64" r="3.2" class="mini-fill" /><text x="88" y="33">y=|x|</text><text x="127" y="78">x</text><text x="80" y="18">y</text><text x="63" y="78">0</text></svg></span>
               <span class="chapter-mini"><svg viewBox="0 0 150 86"><path class="mini-axis" d="M18 64H134M52 74V12" /><path class="mini-mark mini-blue" d="M24 61C42 61 57 58 72 50C89 41 102 25 116 12" /><path class="mini-mark mini-coral mini-dash" d="M22 64H130" /><text x="90" y="25">y=e^x</text><text x="127" y="78">x</text><text x="58" y="18">y</text><text x="41" y="78">0</text></svg></span>
             </span>
           </button>
@@ -3151,7 +3151,7 @@
     function renderDesmosAdjuster() {
       const lab = document.createElement("article");
       lab.className = "desmos-lab-card";
-      const sliderData = [["a", "1", "vertical stretch / amplitude"], ["b", "1", "period or horizontal shift"], ["c", "0", "phase shift"], ["d", "0", "vertical shift"]];
+      const sliderData = [["a", "1", "vertical stretch / reflection"], ["b", "1", "intercept / horizontal shift / period"], ["c", "0", "vertical shift or phase shift"], ["d", "0", "final vertical shift when used"]];
       const sliders = sliderData.map(([name, value, hint]) => `<label>${name}: <span id="${name}Val">${Number(value).toFixed(1)}</span><small>${hint}</small><input id="${name}Slider" type="range" min="-4" max="4" step="0.1" value="${value}"></label>`).join("");
       lab.innerHTML = `
         <div class="desmos-canvas-wrap">
@@ -3162,13 +3162,13 @@
           <div class="desmos-equation" id="desmosEquation">y = a sin(bx + c) + d</div>
           <label>Graph type
             <select id="desmosType">
-              <option value="linear">Linear: y = ax + d</option>
-              <option value="quadratic">Quadratic: y = a(x-b)^2 + d</option>
-              <option value="cubic">Cubic: y = a(x-b)^3 + d</option>
-              <option value="exp">Exponential: y = a e^x + d</option>
-              <option value="log">Logarithm: y = a ln(x-b) + d</option>
-              <option value="sqrt">Square root: y = a sqrt(x-b) + d</option>
-              <option value="absLinear">Absolute linear: y = a|x-b| + d</option>
+              <option value="linear">Linear: y = ax + b</option>
+              <option value="quadratic">Quadratic: y = a(x-b)^2 + c</option>
+              <option value="cubic">Cubic: y = a(x-b)^3 + c</option>
+              <option value="exp">Exponential: y = a e^x + b</option>
+              <option value="log">Logarithm: y = a ln(x-b) + c</option>
+              <option value="sqrt">Square root: y = a sqrt(x-b) + c</option>
+              <option value="absLinear">Absolute linear: y = a|x-b| + c</option>
               <option value="absQuadratic">Absolute quadratic: y = |a(x-b)^2 + c| + d</option>
               <option value="sin" selected>Sine: y = a sin(bx+c)+d</option>
               <option value="cos">Cosine: y = a cos(bx+c)+d</option>
@@ -3981,13 +3981,13 @@
     function desmosLatex(type, a, b, c, d, safeB) {
       const A = a.toFixed(2), B = b.toFixed(2), C = c.toFixed(2), D = d.toFixed(2), SB = safeB.toFixed(2);
       const latex = {
-        linear: "y=" + A + "x+" + D,
-        quadratic: "y=" + A + "\\left(x-" + B + "\\right)^2+" + D,
-        cubic: "y=" + A + "\\left(x-" + B + "\\right)^3+" + D,
-        exp: "y=" + A + "e^x+" + D,
-        log: "y=" + A + "\\ln\\left(x-" + B + "\\right)+" + D,
-        sqrt: "y=" + A + "\\sqrt{x-" + B + "}+" + D,
-        absLinear: "y=" + A + "\\left|x-" + B + "\\right|+" + D,
+        linear: "y=" + A + "x+" + B,
+        quadratic: "y=" + A + "\\left(x-" + B + "\\right)^2+" + C,
+        cubic: "y=" + A + "\\left(x-" + B + "\\right)^3+" + C,
+        exp: "y=" + A + "e^x+" + B,
+        log: "y=" + A + "\\ln\\left(x-" + B + "\\right)+" + C,
+        sqrt: "y=" + A + "\\sqrt{x-" + B + "}+" + C,
+        absLinear: "y=" + A + "\\left|x-" + B + "\\right|+" + C,
         absQuadratic: "y=\\left|" + A + "\\left(x-" + B + "\\right)^2+" + C + "\\right|+" + D,
         sin: "y=" + A + "\\sin\\left(" + SB + "x+" + C + "\\right)+" + D,
         cos: "y=" + A + "\\cos\\left(" + SB + "x+" + C + "\\right)+" + D,
@@ -4027,13 +4027,13 @@
       ["a","b","c","d"].forEach(name => lab.querySelector("#" + name + "Val").textContent = Number(lab.querySelector("#" + name + "Slider").value).toFixed(1));
       const safeB = Math.abs(b) < 0.1 ? 1 : b;
       const eq = {
-        linear: "y = " + a.toFixed(1) + "x + " + d.toFixed(1),
-        quadratic: "y = " + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^2 + " + d.toFixed(1),
-        cubic: "y = " + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^3 + " + d.toFixed(1),
-        exp: "y = " + a.toFixed(1) + "e^x + " + d.toFixed(1),
-        log: "y = " + a.toFixed(1) + "ln(x - " + b.toFixed(1) + ") + " + d.toFixed(1),
-        sqrt: "y = " + a.toFixed(1) + "sqrt(x - " + b.toFixed(1) + ") + " + d.toFixed(1),
-        absLinear: "y = " + a.toFixed(1) + "|x - " + b.toFixed(1) + "| + " + d.toFixed(1),
+        linear: "y = " + a.toFixed(1) + "x + " + b.toFixed(1),
+        quadratic: "y = " + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^2 + " + c.toFixed(1),
+        cubic: "y = " + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^3 + " + c.toFixed(1),
+        exp: "y = " + a.toFixed(1) + "e^x + " + b.toFixed(1),
+        log: "y = " + a.toFixed(1) + "ln(x - " + b.toFixed(1) + ") + " + c.toFixed(1),
+        sqrt: "y = " + a.toFixed(1) + "sqrt(x - " + b.toFixed(1) + ") + " + c.toFixed(1),
+        absLinear: "y = " + a.toFixed(1) + "|x - " + b.toFixed(1) + "| + " + c.toFixed(1),
         absQuadratic: "y = |" + a.toFixed(1) + "(x - " + b.toFixed(1) + ")^2 + " + c.toFixed(1) + "| + " + d.toFixed(1),
         sin: "y = " + a.toFixed(1) + "sin(" + safeB.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1),
         cos: "y = " + a.toFixed(1) + "cos(" + safeB.toFixed(1) + "x + " + c.toFixed(1) + ") + " + d.toFixed(1),
@@ -4048,13 +4048,13 @@
       const px = x => pad + (x - xMin) * sx, py = y => h - pad - (y - yMin) * sy;
       const x0 = px(0), y0 = py(0);
       const fn = {
-        linear: x => a * x + d,
-        quadratic: x => a * (x - b) ** 2 + d,
-        cubic: x => a * (x - b) ** 3 + d,
-        exp: x => a * Math.exp(x) + d,
-        log: x => x > b ? a * Math.log(x - b) + d : Infinity,
-        sqrt: x => x >= b ? a * Math.sqrt(x - b) + d : Infinity,
-        absLinear: x => a * Math.abs(x - b) + d,
+        linear: x => a * x + b,
+        quadratic: x => a * (x - b) ** 2 + c,
+        cubic: x => a * (x - b) ** 3 + c,
+        exp: x => a * Math.exp(x) + b,
+        log: x => x > b ? a * Math.log(x - b) + c : Infinity,
+        sqrt: x => x >= b ? a * Math.sqrt(x - b) + c : Infinity,
+        absLinear: x => a * Math.abs(x - b) + c,
         absQuadratic: x => Math.abs(a * (x - b) ** 2 + c) + d,
         sin: x => a * Math.sin(safeB * x + c) + d,
         cos: x => a * Math.cos(safeB * x + c) + d,
@@ -4068,9 +4068,9 @@
       ctx.strokeStyle = "#102033"; ctx.fillStyle = "#102033"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(pad, y0); ctx.lineTo(w - pad + 12, y0); ctx.stroke(); drawMiniArrowHead(ctx, w - pad + 12, y0, 0, "#102033"); ctx.beginPath(); ctx.moveTo(x0, h - pad); ctx.lineTo(x0, pad - 12); ctx.stroke(); drawMiniArrowHead(ctx, x0, pad - 12, -Math.PI / 2, "#102033");
       ctx.font = "bold 18px Arial"; ctx.textAlign = "left"; ctx.fillText("x", w - pad + 22, y0 + 18); ctx.fillText("y", x0 + 10, pad - 20); ctx.fillText("0", x0 - 22, y0 + 22);
       if (["log", "sqrt"].includes(type)) { ctx.save(); ctx.strokeStyle = "rgba(255,111,97,0.75)"; ctx.lineWidth = 3; ctx.setLineDash([8,7]); ctx.beginPath(); ctx.moveTo(px(b), pad); ctx.lineTo(px(b), h - pad); ctx.stroke(); ctx.restore(); }
-      if (type === "exp") { ctx.save(); ctx.strokeStyle = "rgba(255,111,97,0.75)"; ctx.lineWidth = 3; ctx.setLineDash([8,7]); ctx.beginPath(); ctx.moveTo(pad, py(d)); ctx.lineTo(w - pad, py(d)); ctx.stroke(); ctx.restore(); }
-      ctx.save(); ctx.strokeStyle = "#2077ff"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); let started = false;
-      for (let x = xMin; x <= xMax; x += 0.025) { const y = fn(x); if (!Number.isFinite(y) || y < yMin - 0.5 || y > yMax + 0.5) { started = false; continue; } const X = px(x), Y = py(y); if (!started) { ctx.moveTo(X, Y); started = true; } else ctx.lineTo(X, Y); }
+      if (type === "exp") { ctx.save(); ctx.strokeStyle = "rgba(255,111,97,0.75)"; ctx.lineWidth = 3; ctx.setLineDash([8,7]); ctx.beginPath(); ctx.moveTo(pad, py(b)); ctx.lineTo(w - pad, py(b)); ctx.stroke(); ctx.restore(); }
+      ctx.save(); ctx.beginPath(); ctx.rect(pad, pad, w - pad * 2, h - pad * 2); ctx.clip(); ctx.strokeStyle = "#2077ff"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); let started = false;
+      for (let x = xMin; x <= xMax; x += 0.025) { const y = fn(x); if (!Number.isFinite(y) || y < yMin || y > yMax) { started = false; continue; } const X = px(x), Y = py(y); if (!started) { ctx.moveTo(X, Y); started = true; } else ctx.lineTo(X, Y); }
       ctx.stroke(); ctx.restore(); ctx.fillStyle = "#0b2d55"; ctx.font = "bold 18px Georgia"; ctx.textAlign = "left"; ctx.fillText(eq, pad + 10, pad - 20);
     }
     function drawTriangle(ctx, w, h, type, t) {
